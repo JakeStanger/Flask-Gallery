@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+    <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
+    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css"
+          rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <h1>Upload</h1>
+    <input type="file" accept="image_view/*" class="filepond">
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+    <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+    <script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+    <script>
+        FilePond.registerPlugin(FilePondPluginFileValidateType, FilePondPluginImagePreview);
+        FilePond.create(document.querySelector('input[type="file"]'), {
+            server: '/upload',
+            acceptedFileTypes: ['image_view/*']
+        });
+    </script>
+{% endblock %}

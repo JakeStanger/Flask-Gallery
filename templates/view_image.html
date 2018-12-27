@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <h1>{{ image.name }}</h1>
+    <a href="{{ url_for('image_view', filename=image.filename) }}">
+        <img style="height: 85vh;" class="img-fluid" src="{{ url_for('image_view', filename=image.filename) }}" alt="{{ image.name }}">
+    </a>
+    {% if image.description %}
+        <div>{{ image.description }}</div>
+    {% endif %}
+    {% if image.location %}
+        <div><b>Location: </b>{{ image.location }}</div>
+    {% endif %}
+    <h3>Image information:</h3>
+    <div><b>Time Taken: </b>{{ image.taken_time.strftime('%d/%m/%y %H:%M:%S') }}</div>
+    <div><b>Dimensions: </b>{{ image.width }} x {{ image.height }}</div>
+    <div><b>Exposure: </b> {{ to_fraction(image.exposure) }}s</div>
+    <div><b>Focal Length: </b> {{ image.focal_length }}</div>
+    <div><b>Aperture: </b> f/{{ image.aperture }}</div>
+    <div><b>ISO: </b> {{ image.iso }}</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+requests
+werkzeug
+Pillow
+flask
+flask-login
+flask-sqlalchemy

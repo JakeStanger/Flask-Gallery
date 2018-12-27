@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% macro card(image) %}
+    <div class="col-md-4">
+        <div class="card">
+            <a href="{{ url_for('image', filename=image.filename) }}">
+                 <img class="img-fluid" src="{{ url_for('image_view', filename=image.filename) }}" alt="{{ image.name }}">
+            </a>
+            <div class="info">
+                <div class="title">{{ image.name }}</div>
+                {% if image.location %}
+                    <div><b>Location: </b>{{ image.location }}</div>
+                {% endif %}
+                {% if image.description %}
+                    <div class="description"><i>{{ image.description }}</i></div>
+                {% endif %}
+                <div class="tags">
+                    {% for tag in image.tags %}
+                        <div class="tag">{{ tag.name }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+{% endblock %}
+
+{% block content %}
+    <h1>Images</h1>
+    <div class="row">
+        {% for image in images %}
+            {{ card(image) }}
+        {% endfor %}
+    </div>
+{% endblock %}
