@@ -4,12 +4,13 @@
     <div class="col-md-4">
         <div class="card">
             <a href="{{ url_for('image', filename=image.filename) }}">
-                 <img class="img-fluid" src="{{ url_for('image_view', filename=image.filename) }}" alt="{{ image.name }}">
+                <img class="img-fluid" src="{{ url_for('image_view', filename=image.filename, thumb=True) }}"
+                     alt="{{ image.name }}">
             </a>
             <div class="info">
                 <div class="title">{{ image.name }}</div>
                 {% if image.location %}
-                    <div><b>Location: </b>{{ image.location }}</div>
+                    <div><b>Location: </b>{{ image.location.name }}</div>
                 {% endif %}
                 {% if image.description %}
                     <div class="description"><i>{{ image.description }}</i></div>
@@ -33,6 +34,8 @@
     <div class="row">
         {% for image in images %}
             {{ card(image) }}
+        {% else %}
+            <span>No images have been uploaded.</span>
         {% endfor %}
     </div>
 {% endblock %}
