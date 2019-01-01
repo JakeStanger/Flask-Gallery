@@ -4,7 +4,7 @@ from .db import database
 db = database()
 
 
-class User(UserMixin, db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -29,7 +29,7 @@ class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False)
     description = db.Column(db.Text)
-    filename = db.Column(db.Text, nullable=False, unique=True)
+    filename = db.Column(db.String(128), nullable=False, unique=True)
 
     width = db.Column(db.Integer)
     height = db.Column(db.Integer)
@@ -55,7 +55,6 @@ class Location(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(32), nullable=False, unique=True)
-    description = db.Column(db.Text)
     images = db.relationship('Image', back_populates='location')
 
     def __repr__(self):
@@ -66,7 +65,7 @@ class Tag(db.Model):
     __tablename__ = 'tags'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text, nullable=False, unique=True)
+    name = db.Column(db.String(32), nullable=False, unique=True)
     images = db.relationship('Image', secondary=image_tag, back_populates='tags')
 
     def __repr__(self):
