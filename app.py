@@ -86,15 +86,63 @@ def require_can_edit(func, get_user=get_current_user):
 
 @app.route('/', methods=['GET'])
 def index():
-    images = database.session().query(database.Image).all()
-    return render_template('main.html', images=images)
+    return render_template('main.html', title='Home')
+
+
+@app.route('/images', methods=['GET'])
+def images():
+    tags = request.args.get('tags')
+    locations = request.args.get('locations')
+    query = request.args.get('query')
+
+    if tags:
+        tags = tags.split(',')
+    if locations:
+        locations = locations.split(',')
+
+    base_query = database.session().query(database.Image).order_by(database.Image.taken_time.desc())
+
+    if tags and len(tags) > 0:
+        base_query = base_query.filter(database.Image.tags.any(
+            database.Tag.name.in_(tags)))
+
+    if locations and len(locations) > 0:
+        base_query = base_query.filter(
+            database.Image.location.has(database.Location.name.in_(locations)))
+
+    if query and len(query) > 0:
+        base_query = base_query.filter(database.Image.name.ilike('%' + query + '%'))
+
+    images = base_query.all()
+
+    return jsonify([*map(lambda im: {
+        "name": im.name,
+        "description": im.description,
+        "filename": im.filename,
+        "tags": [*map(lambda t: t.name, im.tags)],
+        "location": im.location.name if im.location else None,
+        "taken_time": im.taken_time
+    }, images)])
+
+
+@app.route('/tags', methods=['GET'])
+def tags():
+    tags = database.session().query(database.Tag).all()
+    return jsonify(*map(lambda t: t.name, [*filter(lambda t: len(t.images) > 0, tags)]))
+
+
+@app.route('/locations', methods=['GET'])
+def locations():
+    locations = database.session().query(database.Location).all()
+    return jsonify(*map(lambda l: l.name, locations))
 
 
 @app.route('/image/<string:filename>', methods=['GET'])
 def image(filename: str):
     try:
         image = database.session().query(database.Image).filter_by(filename=filename).one()
-        return render_template('view_image.html', image=image)
+        return render_template('view_image.html', image=image, tags=', '.join([tag.name for tag in image.tags]),
+                               title=image.name)
     except Exception as e:
         traceback.print_exc()
         return make_response("404", 404)
@@ -114,6 +162,7 @@ def image_view(filename: str, thumb: bool = False):
 
 @app.route('/image/<string:filename>/edit', methods=['GET', 'POST'])
 @app.route('/image/edit', methods=['POST'])
+@require_can_edit
 def image_edit(filename: str = None):
     if not filename:
         filename = secure_filename(request.json.get('filename'))
@@ -130,42 +179,43 @@ def image_edit(filename: str = None):
             if get('tags'):
                 tag_list = []
                 for tag in get('tags'):
-                    db_tag = database.session().query(database.Tag).filter_by(name=tag).first()
+                    tag_name = tag.lower()
+                    db_tag = database.session().query(database.Tag).filter_by(name=tag_name).first()
                     if db_tag:
                         tag_list.append(db_tag)
                     else:
-                        db_tag = database.Tag(name=tag)
+                        db_tag = database.Tag(name=tag_name)
                         database.session().add(db_tag)
-                        tag_list.append(database.session().query(database.Tag).filter_by(name=tag).one())
+                        tag_list.append(database.session().query(database.Tag).filter_by(name=tag_name).one())
 
                 image.tags = tag_list
 
             if get('location'):
-                db_location = database.session().query(database.Location).filter_by(name=get('location')).first()
+                location_name = get('location').title()
+                db_location = database.session().query(database.Location).filter_by(name=location_name).first()
                 if db_location:
                     image.location = db_location
                 else:
-                    db_location = database.Location(name=get('location'))
+                    db_location = database.Location(name=location_name)
                     database.session().add(db_location)
-                    image.location = database.session().query(database.Location).filter_by(name=get('location')).one()
+                    image.location = database.session().query(database.Location).filter_by(name=location_name).one()
 
             database.session().commit()
 
             flash("Image succesfully uploaded", category='success')
             return redirect(url_for('index'))
-        return "EDIT %s" % filename
+        else:
+            tags = [*map(lambda t: t.name, database.session().query(database.Tag).all())]
+            image_tags = [*map(lambda t: t.name, image.tags)]
+            locations = [*map(lambda l: l.name, database.session().query(database.Location).all())]
+            return render_template('edit_image.html', image=image, tags=tags, locations=locations,
+                                   image_tags=image_tags, title='Edit %s' % image.name)
     except Exception as e:
         traceback.print_exc()
         flash("The image could not be found. This is a bug! " + str(e), category='error')
         return redirect(request.referrer)
 
 
-@app.route('/image/<string:filename>/process', methods=['POST'])
-def process_image(filename: str):
-    return "Process"
-
-
-# @require_can_upload
 @app.route('/upload', methods=['GET', 'POST', 'DELETE'])
 @require_can_upload
 def upload():
@@ -173,7 +223,7 @@ def upload():
         locations = database.session().query(database.Location).all()
         tags = database.session().query(database.Tag).all()
         return render_template('upload.html', locations=[*map(lambda location: location.name, locations)],
-                               tags=[*map(lambda tag: tag.name, tags)])
+                               tags=[*map(lambda tag: tag.name, tags)], title='Upload')
 
     elif request.method == 'POST':
         file: FileStorage = request.files['filepond']
@@ -200,7 +250,7 @@ def upload():
                         exif = None
 
                     # Save thumbnail
-                    pil_img.thumbnail((360, 480), Image.ANTIALIAS)
+                    pil_img.thumbnail((360, 10000), Image.ANTIALIAS)
                     pil_img.save(filepath + ".thumb", "JPEG")
 
                     # Get image_view tags
@@ -288,7 +338,7 @@ def login():
         else:
             flash("That username does not exist", category='error')
 
-    return render_template('login.html')
+    return render_template('login.html', title='Login')
 
 
 @app.route('/signup', methods=['POST'])

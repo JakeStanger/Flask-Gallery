@@ -1,41 +1,16 @@
 {% extends 'layout.html' %}
 
-{% macro card(image) %}
-    <div class="col-md-4">
-        <div class="card">
-            <a href="{{ url_for('image', filename=image.filename) }}">
-                <img class="img-fluid" src="{{ url_for('image_view', filename=image.filename, thumb=True) }}"
-                     alt="{{ image.name }}">
-            </a>
-            <div class="info">
-                <div class="title">{{ image.name }}</div>
-                {% if image.location %}
-                    <div><b>Location: </b>{{ image.location.name }}</div>
-                {% endif %}
-                {% if image.description %}
-                    <div class="description"><i>{{ image.description }}</i></div>
-                {% endif %}
-                <div class="tags">
-                    {% for tag in image.tags %}
-                        <div class="tag">{{ tag.name }}</div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-    </div>
-{% endmacro %}
-
 {% block head %}
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/react-tagsinput.css') }}">
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+{#    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>#}
+    <script src="https://unpkg.com/react-autosuggest/dist/standalone/autosuggest.js"></script>
+{#    <script src="{{ url_for('static', filename='js/react-tagsinput.js') }}"></script>#}
+    <script defer src="{{ url_for('static', filename='js/bundle.js') }}"></script>
 {% endblock %}
 
 {% block content %}
-    <h1>Images</h1>
-    <div class="row">
-        {% for image in images %}
-            {{ card(image) }}
-        {% else %}
-            <span>No images have been uploaded.</span>
-        {% endfor %}
-    </div>
+    <div id="react-container"></div>
 {% endblock %}

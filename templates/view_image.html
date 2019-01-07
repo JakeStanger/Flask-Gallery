@@ -12,6 +12,9 @@
     {% if image.location %}
         <div><b>Location: </b>{{ image.location.name }}</div>
     {% endif %}
+    {% if image.tags %}
+        <div><b>Tags: </b>{{ tags }}</div>
+    {% endif %}
     <h3>Image information:</h3>
     {% if image.taken_time %}
         <div><b>Time Taken: </b>{{ image.taken_time.strftime('%d/%m/%y %H:%M:%S') }}</div>
@@ -28,5 +31,8 @@
     {% endif %}
     {% if image.iso %}
         <div><b>ISO: </b> {{ image.iso }}</div>
+    {% endif %}
+    {% if current_user.can_edit %}
+        <a href="{{ url_for('image_edit', filename=image.filename) }}">Edit image</a>
     {% endif %}
 {% endblock %}

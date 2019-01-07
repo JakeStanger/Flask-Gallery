@@ -1,5 +1,126 @@
 {% extends 'layout.html' %}
 
-{% block content %}
+{% block head %}
+    <link href="{{ url_for('static', filename='css/tagsinput.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/typeaheadjs.css') }}" rel="stylesheet">
+{% endblock %}
 
+{% block content %}
+    <h2>Edit {{ image.name }}</h2>
+    <form id="form" method="post">
+        <div class="form-group">
+            <label for="extraInfoName">Name</label>
+            <input class="form-control" id="extraInfoName" name="name" value="{{ image.name }}">
+
+            <label for="extraInfoDescription">Description</label>
+            <textarea class="form-control" rows=3 id="extraInfoDescription"
+                      name="description">{{ image.description }}</textarea>
+
+            <label for="extraInfoTags">Tags</label>
+            <select class="form-control" multiple id="extraInfoTags" name="tags">
+            </select>
+
+            <label for="extraInfoLocation">Location</label>
+            <select class="form-control" id="extraInfoLocation" name="location"></select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typeahead.js/0.11.1/typeahead.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tagsinput.js') }}"></script>
+    <script>
+        const extraInfoTags = $('#extraInfoTags');
+        const extraInfoLocation = $('#extraInfoLocation');
+
+        let tags = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            local: $.map({{ tags|safe }}, (tag) => {
+                return {
+                    name: tag
+                };
+            })
+        });
+        tags.initialize();
+
+        let locations = new Bloodhound({
+            datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            local: $.map({{ locations|safe }}, (location) => {
+                return {
+                    name: location
+                };
+            })
+        });
+
+        extraInfoTags.tagsinput({
+            confirmKeys: [13, 32, 88],
+            maxTags: 5,
+            maxChars: 32,
+            trimValue: true,
+            itemValue: 'name',
+            typeaheadjs: [{
+                minLength: 1,
+                highlight: true
+            }, {
+                name: 'tags',
+                displayKey: 'name',
+                valueKey: 'name',
+                source: tags.ttAdapter()
+            }],
+            freeInput: true
+        });
+
+        extraInfoLocation.tagsinput({
+            confirmKeys: [13, 88],
+            maxTags: 1,
+            maxChars: 32,
+            trimValue: true,
+            itemValue: 'name',
+            typeaheadjs: [{
+                minLength: 1,
+                highlight: true
+            }, {
+                name: 'tags',
+                displayKey: 'name',
+                valueKey: 'name',
+                source: locations.ttAdapter()
+            }],
+            freeInput: true
+        });
+
+        {{image_tags|safe}}.forEach(tag =>
+            extraInfoTags.tagsinput('add', {name: tag})
+        );
+
+        extraInfoLocation.tagsinput('add', {name: "{{ image.location.name}}"});
+
+        $('#form').on('submit', e => {
+            e.preventDefault();
+
+            const tags = $('#extraInfoTags option').map(function () {
+                return $(this).attr('value');
+            }).get();
+
+            fetch("{{ url_for('image_edit') }}", {
+                method: 'POST',
+                body: JSON.stringify({
+                    name: $('#extraInfoName').val(),
+                    description: $('#extraInfoDescription').val(),
+                    tags: tags,
+                    location: $('#extraInfoLocation').val(),
+                    filename: "{{ image.filename }}"
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                redirect: "follow"
+            }).then(res => {
+                if (res.redirected) window.location.href = res.url;
+            }).catch(console.error);
+        });
+
+    </script>
 {% endblock %}
