@@ -258,22 +258,30 @@ def upload():
                     api_secret = settings['imagga_api_secret']
                     image_url = '%s/%s' % (settings['external_url'], filename)
 
+                    tag_list = []
                     response = requests.get(
                         'https://api.imagga.com/v2/tags?image_url=%s&limit=5&threshold=25' % image_url,
                         auth=(api_key, api_secret))
+                    try:
+                        response.raise_for_status()
+                    except requests.exceptions.HTTPError as error:
+                        print(error)
 
-                    tags = [*map(lambda x: x['tag']['en'],
-                                 response.json()['result']['tags'])][:5]
+                    if response.ok:
+                        tags = [*map(lambda x: x['tag']['en'],
+                                     response.json()['result']['tags'])][:5]
 
-                    tag_list = []
-                    for tag in tags:
-                        db_tag = database.session().query(database.Tag).filter_by(name=tag).first()
-                        if db_tag:
-                            tag_list.append(db_tag)
-                        else:
-                            db_tag = database.Tag(name=tag)
-                            database.session().add(db_tag)
-                            tag_list.append(database.session().query(database.Tag).filter_by(name=tag).first())
+                        for tag in tags:
+                            db_tag = database.session().query(database.Tag).filter_by(name=tag).first()
+                            if db_tag:
+                                tag_list.append(db_tag)
+                            else:
+                                db_tag = database.Tag(name=tag)
+                                database.session().add(db_tag)
+                                tag_list.append(database.session().query(database.Tag).filter_by(name=tag).first())
+                    else:
+                        print("Error occurred while receiving tags")
+                        print(response.status_code, response.text)
 
                     friendly_name = get_friendly_name(filename)
 
