@@ -1,0 +1,27 @@
+{
+  "name": "flask-gallery",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JakeStanger/Flask-Gallery.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JakeStanger/Flask-Gallery/issues"
+  },
+  "homepage": "https://github.com/JakeStanger/Flask-Gallery#readme",
+  "dependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-react-app": "^3.1.2"
+  },
+  "devDependencies": {
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
+  }
+}
